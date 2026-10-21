@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Клубы — Premier League{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-extrabold text-gray-900">Клубы Премьер-лиги</h1>
+    <p class="text-gray-500">Сезон 2026/27 • 20 участников</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for team in teams %}
+    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition p-5 border border-gray-200 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold px-2 py-1 bg-purple-100 text-purple-900 rounded">{{ team.short_name }}</span>
+                <span class="text-xs text-gray-400">{{ team.city }}</span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 mb-1">{{ team.name }}</h2>
+            <p class="text-sm text-gray-600 flex items-center mt-2">
+                🏟️ <span class="ml-1 text-xs text-gray-500">{{ team.stadium }}</span>
+            </p>
+            <p class="text-sm text-gray-600 flex items-center mt-1">
+                👔 <span class="ml-1 text-xs text-gray-700"><b>Тренер:</b> {{ team.coach_fn }} {{ team.coach_ln }}</span>
+            </p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-xs">
+            <span class="text-gray-400">Игроков в базе: {{ team.player_count }}</span>
+            <a href="/teams/{{ team.id }}" class="text-purple-700 font-bold hover:underline">Состав →</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

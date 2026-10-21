@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Premier League{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .pl-purple { background-color: #38003c; }
+        .pl-green { color: #00ff87; }
+        .pl-btn-green { background-color: #00ff87; color: #38003c; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Верхняя панель (Header) -->
+    <header class="pl-purple text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl font-black tracking-tight text-white">🦁 Premier League</span>
+            </div>
+            <nav class="flex space-x-6 text-sm font-semibold uppercase tracking-wider">
+                <a href="/" class="hover:text-emerald-400 transition">Таблица</a>
+                <a href="/teams" class="hovansition">Команды</a>
+                <a href="/admin" class="hover:text-emerald-400 transition">Панель управления</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Основной контент страницы -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Подвал -->
+    <footer class="pl-purple text-gray-400 py-4 text-center text-xs">
+        <p>© 2026 Premier League Tournament Management System</p>
+    </footer>
+
+</body>
+</html>
