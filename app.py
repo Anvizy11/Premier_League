@@ -1,15 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, abort
 from database import get_connection
 
 app = Flask(__name__)
-
-@app.route("/")
-def index():
-    return render_template("teams.html", teams=get_teams_summary())
-
-@app.route("/teams")
-def teams_list():
-    return render_template("teams.html", teams=get_teams_summary())
 
 def get_teams_summary():
     conn = get_connection()
@@ -28,6 +20,41 @@ def get_teams_summary():
     teams = cursor.execute(query).fetchall()
     conn.close()
     return teams
+
+@app.route("/")
+@app.route("/teams")
+def teams_list():
+    return render_template("teams.html", teams=get_teams_summary())
+
+@app.route("/teams/<int:team_id>")
+def team_detail(team_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Получаем информацию о команде
+    team = cursor.execute("SELECT * FROM teams WHERE id = ?", (team_id,)).fetchone()
+    if not team:
+        conn.close()
+        abort(404)
+
+    # Список игроков с сортировкой по позиции
+    players = cursor.execute("""
+        SELECT * FROM players 
+        WHERE team_id = ? 
+        ORDER BY 
+            CASE position 
+                WHEN 'GK' THEN 1 
+                WHEN 'DF' THEN 2 
+                WHEN 'MF' THEN 3 
+                WHEN 'FW' THEN 4 
+            END, jersey_number ASC
+    """, (team_id,)).fetchall()
+
+    # Список персонала
+    staff = cursor.execute("SELECT * FROM staff WHERE team_id = ? ORDER BY id ASC", (team_id,)).fetchall()
+
+    conn.close()
+    return render_template("team_detail.html", team=team, players=players, staff=staff)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
