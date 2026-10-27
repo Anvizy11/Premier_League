@@ -24,7 +24,7 @@
     </div>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-10">
     <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
             <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs border-b border-gray-200">
@@ -41,7 +41,6 @@
             <tbody class="divide-y divide-gray-100">
                 {% for row in standings %}
                 <tr class="hover:bg-purple-50/40 transition">
-                    <!-- Порядковый номер с цветовой полоской зоны -->
                     <td class="px-4 py-3.5 text-center font-bold relative">
                         {% if loop.index <= 4 %}
                             <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
@@ -54,30 +53,18 @@
                             {{ loop.index }}
                         </span>
                     </td>
-
-                    <!-- Название клуба со ссылкой на состав -->
                     <td class="px-4 py-3.5 font-bold text-gray-900">
                         <a href="/teams/{{ row.id }}" class="hover:text-purple-900 hover:underline flex items-center space-x-2">
                             <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded font-semibold">{{ row.short_name }}</span>
                             <span>{{ row.name }}</span>
                         </a>
                     </td>
-
-                    <!-- Очки (выделены фоном) -->
                     <td class="px-4 py-3.5 text-center font-black text-base text-purple-950 bg-purple-50/60">
                         {{ row.points }}
                     </td>
-
-                    <!-- Количество проведенных игр -->
                     <td class="px-4 py-3.5 text-center text-gray-700 font-medium">{{ row.played }}</td>
-
-                    <!-- Забитые мячи -->
                     <td class="px-4 py-3.5 text-center text-gray-600">{{ row.gf }}</td>
-
-                    <!-- Пропущенные мячи -->
                     <td class="px-4 py-3.5 text-center text-gray-600">{{ row.ga }}</td>
-
-                    <!-- Разница мячей -->
                     <td class="px-4 py-3.5 text-center font-bold {% if row.gd > 0 %}text-emerald-600{% elif row.gd < 0 %}text-rose-600{% else %}text-gray-400{% endif %}">
                         {% if row.gd > 0 %}+{{ row.gd }}{% else %}{{ row.gd }}{% endif %}
                     </td>
@@ -85,6 +72,93 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="pl-purple p-4 text-white flex justify-between items-center">
+            <h2 class="font-extrabold text-base flex items-center gap-2">
+                <span>⚽ Гонка бомбардиров</span>
+            </h2>
+            <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Золотая бутса</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-center w-10">#</th>
+                        <th class="px-4 py-3">Игрок</th>
+                        <th class="px-4 py-3">Клуб</th>
+                        <th class="px-4 py-3 text-center font-black text-gray-900">Голы</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for scorer in top_scorers %}
+                    <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="window.location='/players/{{ scorer.id }}'">
+                        <td class="px-4 py-3 text-center font-black text-gray-500">{{ loop.index }}</td>
+                        <td class="px-4 py-3 font-bold text-purple-950 hover:underline">
+                            {{ scorer.first_name }} {{ scorer.last_name }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">
+                            <span class="px-2 py-0.5 bg-gray-100 rounded font-semibold text-gray-700">{{ scorer.team_short_name }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center font-black text-emerald-600 text-base">
+                            {{ scorer.goals }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-6 text-center text-gray-400 text-sm">События голов пока не зарегистрированы</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="pl-purple p-4 text-white flex justify-between items-center">
+            <h2 class="font-extrabold text-base flex items-center gap-2">
+                <span>🟨 Дисциплинарный реестр тура</span>
+            </h2>
+            <span class="text-xs text-rose-300 font-bold uppercase tracking-wider">Карточки</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-center w-10">#</th>
+                        <th class="px-4 py-3">Игрок</th>
+                        <th class="px-4 py-3">Клуб</th>
+                        <th class="px-3 py-3 text-center">🟨 ЖК</th>
+                        <th class="px-3 py-3 text-center">🟥 КК</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in disciplinary_leaders %}
+                    <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="window.location='/players/{{ item.id }}'">
+                        <td class="px-4 py-3 text-center font-black text-gray-500">{{ loop.index }}</td>
+                        <td class="px-4 py-3 font-bold text-purple-950 hover:underline flex items-center gap-2">
+                            <span>{{ item.first_name }} {{ item.last_name }}</span>
+                            {% if item.is_suspended %}
+                                <span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-extrabold">⛔ DSQ</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">
+                            <span class="px-2 py-0.5 bg-gray-100 rounded font-semibold text-gray-700">{{ item.team_short_name }}</span>
+                        </td>
+                        <td class="px-3 py-3 text-center font-black text-amber-600">{{ item.yellow_cards }}</td>
+                        <td class="px-3 py-3 text-center font-black text-rose-600">{{ item.red_cards }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-6 text-center text-gray-400 text-sm">Предупреждений и удалений пока нет</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
