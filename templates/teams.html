@@ -45,7 +45,12 @@
                 <div>
                     <span class="text-[11px] uppercase font-bold text-gray-400 block leading-tight">Главный тренер</span>
                     <span class="font-semibold text-xs sm:text-sm text-gray-800">
-                        {% if team.coach_fn %}{{ team.coach_fn }} {{ team.coach_ln }}{% else %}—{% endif %}
+                        {% if team.coach_ln %}
+                            {{ team.coach_fn }} {{ team.coach_ln }}
+                            <span class="text-gray-400 text-xs font-normal">({{ team.coach_nat }})</span>
+                        {% else %}
+                            —
+                        {% endif %}
                     </span>
                 </div>
             </div>

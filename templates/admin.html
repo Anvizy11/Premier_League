@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель управления — Premier League{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-black text-gray-900">Панель управления</h1>
+    <p class="text-gray-500 text-sm mt-1">Организация матчей, проверка судейских протоколов и дисциплинарный реестр</p>
+</div>
+
+<!-- Блок 1. Создание нового матча (Формирование пары тура) -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-10 p-6">
+    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <span>🗓 Назначить матч в расписание</span>
+    </h2>
+    <form action="/admin/create-fixture" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Тур</label>
+            <input type="number" name="gameweek" min="1" max="38" value="1" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm font-bold bg-gray-50 focus:bg-white" required>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Хозяева</label>
+            <select name="home_team_id" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm font-semibold bg-gray-50 focus:bg-white" required>
+                {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Гости</label>
+            <select name="away_team_id" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm font-semibold bg-gray-50 focus:bg-white" required>
+                {% for team in teams %}
+                    <option value="{{ team.id }}" {% if loop.index == 2 %}selected{% endif %}>{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="w-full pl-purple hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-lg text-sm transition">
+                Создать протокол матча →
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Блок 2. Реестр матчей и судейских протоколов -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-10">
+    <div class="pl-purple p-4 text-white">
+        <h2 class="font-extrabold text-base">Матчи и статус судейских протоколов</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm divide-y divide-gray-100">
+            <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3 text-center">Тур</th>
+                    <th class="px-4 py-3">Матч</th>
+                    <th class="px-4 py-3 text-center">Счет</th>
+                    <th class="px-4 py-3 text-center">Статус протокола</th>
+                    <th class="px-4 py-3 text-right">Электронный протокол</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for m in matches %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-3 text-center font-bold text-gray-500">{{ m.gameweek }}</td>
+                    <td class="px-4 py-3 font-bold text-gray-900">{{ m.home_name }} — {{ m.away_name }}</td>
+                    <td class="px-4 py-3 text-center font-black">
+                        {% if m.status == 'VERIFIED' %}
+                            <span class="text-purple-950 text-base">{{ m.home_score }} : {{ m.away_score }}</span>
+                        {% else %}
+                            <span class="text-gray-400 font-normal">Не зафиксирован</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        {% if m.status == 'SCHEDULED' %}
+                            <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2.5 py-1 rounded-full">Запланирован</span>
+                        {% elif m.status == 'DRAFT' %}
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">📝 Черновик</span>
+                        {% elif m.status == 'PENDING_REVIEW' %}
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">⏳ На проверке</span>
+                        {% elif m.status == 'VERIFIED' %}
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">✅ Утвержден</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <a href="/matches/{{ m.id }}/protocol" class="text-xs font-bold text-purple-700 hover:text-purple-900 border border-purple-200 px-3 py-1.5 rounded-lg hover:bg-purple-50 transition">
+                            Открыть протокол →
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-400 text-sm">Матчей пока нет. Создайте первый матч выше.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Блок 3. Реестр дисквалификаций -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="pl-purple p-4 text-white">
+        <h2 class="font-extrabold text-base">Дисциплинарный реестр (Дисквалификации)</h2>
+    </div>
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm divide-y divide-gray-100">
+                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                    <tr>
+                        <th class="px-4 py-3">ФИО</th>
+                        <th class="px-4 py-3">Клуб</th>
+                        <th class="px-4 py-3 text-center">Статус</th>
+                        <th class="px-4 py-3 text-right">Действие</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for p in players %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-bold text-gray-900">{{ p.first_name }} {{ p.last_name }}</td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">{{ p.team_name }}</td>
+                        <td class="px-4 py-3 text-center">
+                            {% if p.is_suspended %}
+                                <span class="bg-red-100 text-red-700 font-extrabold text-xs px-2.5 py-1 rounded-full">⛔ Дисквалифицирован</span>
+                            {% else %}
+                                <span class="bg-emerald-100 text-emerald-700 font-bold text-xs px-2.5 py-1 rounded-full">Допущен</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <form action="/admin/toggle-suspension/player/{{ p.id }}" method="POST">
+                                <button type="submit" class="text-xs font-semibold px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 transition">
+                                    {% if p.is_suspended %}Снять{% else %}Дисквалифицировать{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Протокол матча: {{ match.home_name }} vs {{ match.away_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+        <div class="flex items-center gap-2 mb-1">
+            <a href="/" class="text-xs font-bold text-purple-700 hover:underline">← Назад к таблице</a>
+            <span class="text-xs text-gray-400">•</span>
+            <span class="text-xs text-gray-500 font-semibold">Тур {{ match.gameweek }}</span>
+        </div>
+        <h1 class="text-3xl font-black text-gray-900">{{ match.home_name }} {{ match.home_score if match.status == 'VERIFIED' else '-' }} : {{ match.away_score if match.status == 'VERIFIED' else '-' }} {{ match.away_name }}</h1>
+    </div>
+
+    <!-- Бейдж статуса протокола -->
+    <div class="flex items-center gap-3">
+        {% if match.status == 'SCHEDULED' %}
+            <span class="bg-gray-100 text-gray-700 font-bold px-3 py-1.5 rounded-full text-xs">Запланирован</span>
+        {% elif match.status == 'DRAFT' %}
+            <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1.5 rounded-full text-xs">📝 Черновик (Судья)</span>
+        {% elif match.status == 'PENDING_REVIEW' %}
+            <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1.5 rounded-full text-xs">⏳ На проверке организатора</span>
+        {% elif match.status == 'VERIFIED' %}
+            <span class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-full text-xs">✅ Утвержден (В таблице)</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Левая колонка: Составы команд (Старт и скамейка) -->
+    <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Состав Хозяев -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="pl-purple p-4 text-white flex justify-between items-center">
+                <h2 class="font-extrabold text-base">{{ match.home_name }}</h2>
+                <span class="text-xs text-purple-200">Хозяева</span>
+            </div>
+            <div class="p-4 overflow-x-auto">
+                <table class="min-w-full text-left text-xs">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-100 uppercase font-bold">
+                            <th class="pb-2 w-8">№</th>
+                            <th class="pb-2">Игрок</th>
+                            <th class="pb-2 text-center">Амплуа</th>
+                            <th class="pb-2 text-center">Роль</th>
+                            <th class="pb-2 text-center">Минуты</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for p in home_players %}
+                        <tr>
+                            <td class="py-2.5 font-black text-gray-500">{{ p.jersey_number }}</td>
+                            <td class="py-2.5 font-bold text-gray-800">{{ p.first_name }} {{ p.last_name }}</td>
+                            <td class="py-2.5 text-center text-gray-500 font-semibold">{{ p.position }}</td>
+                            <td class="py-2.5 text-center">
+                                {% if p.lineup_id %}
+                                    {% if p.is_starter %}
+                                        <span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px]">СТАРТ</span>
+                                    {% else %}
+                                        <span class="bg-gray-100 text-gray-700 font-bold px-2 py-0.5 rounded text-[10px]">ЗАПАС</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-300">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2.5 text-center font-bold text-gray-700">
+                                {{ p.minutes_played if p.lineup_id else 0 }}'
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Состав Гостей -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="pl-purple p-4 text-white flex justify-between items-center">
+                <h2 class="font-extrabold text-base">{{ match.away_name }}</h2>
+                <span class="text-xs text-purple-200">Гости</span>
+            </div>
+            <div class="p-4 overflow-x-auto">
+                <table class="min-w-full text-left text-xs">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-100 uppercase font-bold">
+                            <th class="pb-2 w-8">№</th>
+                            <th class="pb-2">Игрок</th>
+                            <th class="pb-2 text-center">Амплуа</th>
+                            <th class="pb-2 text-center">Роль</th>
+                            <th class="pb-2 text-center">Минуты</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for p in away_players %}
+                        <tr>
+                            <td class="py-2.5 font-black text-gray-500">{{ p.jersey_number }}</td>
+                            <td class="py-2.5 font-bold text-gray-800">{{ p.first_name }} {{ p.last_name }}</td>
+                            <td class="py-2.5 text-center text-gray-500 font-semibold">{{ p.position }}</td>
+                            <td class="py-2.5 text-center">
+                                {% if p.lineup_id %}
+                                    {% if p.is_starter %}
+                                        <span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px]">СТАРТ</span>
+                                    {% else %}
+                                        <span class="bg-gray-100 text-gray-700 font-bold px-2 py-0.5 rounded text-[10px]">ЗАПАС</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-300">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2.5 text-center font-bold text-gray-700">
+                                {{ p.minutes_played if p.lineup_id else 0 }}'
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Правая колонка: События матча и панель управления статусом -->
+    <div class="space-y-6">
+        
+        <!-- Блок добавления события в протокол (доступен, пока не утвержден) -->
+        {% if match.status != 'VERIFIED' %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+            <h3 class="font-extrabold text-sm text-gray-900 mb-3 uppercase tracking-wide">Добавить событие</h3>
+            <form action="/matches/{{ match.id }}/add-event" method="POST" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Игрок</label>
+                    <select name="player_id" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold bg-gray-50 focus:bg-white" required>
+                        <optgroup label="{{ match.home_name }}">
+                            {% for p in home_players %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="{{ match.away_name }}">
+                            {% for p in away_players %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Тип</label>
+                        <select name="event_type" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold bg-gray-50 focus:bg-white" required>
+                            <option value="GOAL">⚽ Гол</option>
+                            <option value="OWN_GOAL">🥅 Автогол</option>
+                            <option value="YELLOW_CARD">🟨 Предупреждение (ЖК)</option>
+                            <option value="RED_CARD">🟥 Удаление (КК)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Минута</label>
+                        <input type="number" name="minute" min="1" max="120" value="1" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-black text-center" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition">
+                    Внести в протокол
+                </button>
+            </form>
+        </div>
+        {% endif %}
+        <!-- Форма проведения замены -->
+        {% if match.status != 'VERIFIED' %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mt-4">
+            <h3 class="font-extrabold text-sm text-gray-900 mb-3 uppercase tracking-wide flex items-center gap-1.5">
+                <span>🔄 Провести замену</span>
+            </h3>
+            <form action="/matches/{{ match.id }}/make-substitution" method="POST" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Уходит с поля (с поля)</label>
+                    <select name="player_out_id" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold bg-gray-50 focus:bg-white" required>
+                        <optgroup label="{{ match.home_name }} (Старт)">
+                            {% for p in home_players if p.is_starter %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="{{ match.away_name }} (Старт)">
+                            {% for p in away_players if p.is_starter %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Выходит на поле (со скамейки)</label>
+                    <select name="player_in_id" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-semibold bg-gray-50 focus:bg-white" required>
+                        <optgroup label="{{ match.home_name }} (Запас)">
+                            {% for p in home_players if not p.is_starter %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="{{ match.away_name }} (Запас)">
+                            {% for p in away_players if not p.is_starter %}
+                                <option value="{{ p.id }}">{{ p.jersey_number }}. {{ p.first_name }} {{ p.last_name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Минута замены</label>
+                    <input type="number" name="minute" min="1" max="120" value="60" class="w-full border border-gray-300 rounded-lg p-2 text-xs font-black text-center" required>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 rounded-lg text-xs transition">
+                    Оформить замену
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+       <!-- Лента событий матча -->
+       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-100 p-3.5">
+            <h3 class="font-extrabold text-xs uppercase tracking-wider text-gray-700">Таймлайн матча</h3>
+        </div>
+        <div class="p-4 space-y-3">
+            {% for e in events %}
+            <div class="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 last:border-none">
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-gray-400 w-6">{{ e.minute }}'</span>
+                    
+                    {% if e.event_type == 'GOAL' %}
+                        <span>⚽</span>
+                        <span class="font-bold text-gray-900">{{ e.first_name }} {{ e.last_name }}</span>
+                    {% elif e.event_type == 'YELLOW_CARD' %}
+                        <span>🟨</span>
+                        <span class="font-bold text-gray-900">{{ e.first_name }} {{ e.last_name }}</span>
+                    {% elif e.event_type == 'RED_CARD' %}
+                        <span>🟥</span>
+                        <span class="font-bold text-red-600">{{ e.first_name }} {{ e.last_name }}</span>
+                    {% elif e.event_type == 'SUB_IN' %}
+                        <span class="text-emerald-600 font-bold">🔄 Вышел:</span>
+                        <span class="font-bold text-gray-900">{{ e.first_name }} {{ e.last_name }}</span>
+                    {% elif e.event_type == 'SUB_OUT' %}
+                        <span class="text-amber-600 font-bold">⬇️ Ушел:</span>
+                        <span class="text-gray-500 line-through">{{ e.first_name }} {{ e.last_name }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-semibold">{{ e.team_short_name }}</span>
+                    
+                    <!-- Кнопка отмены события (доступна, пока протокол не утвержден) -->
+                    {% if match.status != 'VERIFIED' %}
+                    <form action="/matches/{{ match.id }}/delete-event/{{ e.id }}" method="POST" onsubmit="return confirm('Удалить это событие из протокола?');">
+                        <button type="submit" class="text-gray-300 hover:text-red-600 p-0.5 rounded transition" title="Удалить событие">
+                            ✕
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-400 text-center py-4">События пока не зарегистрированы</p>
+            {% endfor %}
+        </div>
+    </div>
+        <!-- Управление статусом протокола (Судья / Организатор) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-4">
+            <h3 class="font-extrabold text-sm text-gray-900 uppercase tracking-wide">Действия по протоколу</h3>
+
+            {% if match.status in ('SCHEDULED', 'DRAFT') %}
+                <form action="/matches/{{ match.id }}/submit-for-review" method="POST">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs transition">
+                        Отправить организатору на проверку
+                    </button>
+                </form>
+            {% elif match.status == 'PENDING_REVIEW' %}
+                <form action="/matches/{{ match.id }}/verify-protocol" method="POST">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs transition">
+                        ✅ Утвердить протокол (Пересчитать лигу)
+                    </button>
+                </form>
+                {% elif match.status == 'VERIFIED' %}
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                    <p class="text-xs font-bold text-emerald-800">✅ Протокол утвержден</p>
+                    <p class="text-[10px] text-emerald-600 mt-0.5">Данные зафиксированы в турнирной таблице</p>
+                </div>
+
+                <!-- Панель администратора / КДК для пересмотра -->
+                <div class="pt-2 border-t border-gray-100">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase mb-2">Решение КДК / Корректировка</p>
+                    <form action="/matches/{{ match.id }}/reopen-protocol" method="POST" onsubmit="return confirm('Открыть протокол на доработку? Данные матча временно перестанут учитываться в таблице до повторного утверждения.');">
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <span>🔓 Открыть протокол для изменений</span>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
