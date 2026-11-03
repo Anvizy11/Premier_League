@@ -6,7 +6,7 @@ DATABASE_NAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), "premie
 
 
 def get_connection():
-    conn = sqlite3.connect(DATABASE_NAME, timeout=30.0)
+    conn = sqlite3.connect(os.environ.get("PREMIER_LEAGUE_DATABASE", DATABASE_NAME), timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=30000")
@@ -16,9 +16,11 @@ def get_connection():
 
 
 @contextmanager
-def db_connection():
+def db_connection(write=False):
     conn = get_connection()
     try:
+        if write:
+            conn.execute("BEGIN IMMEDIATE")
         yield conn
         conn.commit()
     except Exception:

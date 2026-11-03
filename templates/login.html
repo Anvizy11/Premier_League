@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Вход — Premier League{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl p-6 shadow-sm">
+<h1 class="text-2xl font-bold mb-4">Вход в управление</h1>
+{% if error %}<p class="text-red-700 mb-4">{{ error }}</p>{% endif %}
+<form method="POST" class="space-y-4">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<label class="block">Имя пользователя<input name="username" autocomplete="username" required class="block w-full border rounded p-2"></label>
+<label class="block">Пароль<input type="password" name="password" autocomplete="current-password" required class="block w-full border rounded p-2"></label>
+<button class="pl-purple text-white rounded px-5 py-2">Войти</button>
+</form></div>
+{% endblock %}

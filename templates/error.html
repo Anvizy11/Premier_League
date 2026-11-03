@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Ошибка {{ error.code }} — Premier League{% endblock %}
+{% block content %}
+<div class="bg-white rounded-xl p-6"><h1 class="text-2xl font-bold">Ошибка {{ error.code }}</h1>
+<p class="my-4">{{ error.description }}</p>
+<button onclick="history.back()" class="text-purple-700 mr-4">← Назад</button><a href="/">На главную</a></div>
+{% endblock %}

@@ -1,0 +1,15 @@
+.combo { position: relative; min-width: 0; }
+.combo-control { display: flex; border: 1px solid #d1d5db; border-radius: .5rem; background: white; }
+.combo-control:focus-within { outline: 2px solid #7e22ce; outline-offset: 1px; }
+.combo-input { width: 100%; min-width: 0; padding: .5rem; background: transparent; border: 0; border-radius: .5rem; }
+.combo-input:focus { outline: none; }
+.combo-toggle { flex: 0 0 1.7rem; color: #6b7280; }
+.combo-list { position: absolute; top: 100%; left: 0; right: 0; min-width: 100%; z-index: 40; max-height: 15rem; overflow: auto; margin-top: 3px; background: white; border: 1px solid #d1d5db; border-radius: .5rem; box-shadow: 0 6px 18px #0002; }
+.combo-option { display: block; text-align: left; width: 100%; padding: .5rem .65rem; white-space: normal; }
+.combo-option:hover, .combo-option[aria-selected="true"] { background: #f3e8ff; }
+.combo-empty { padding: .65rem; color: #6b7280; }
+.lineup-table { min-width: 440px; table-layout: fixed; }
+.lineup-table th:nth-child(1) { width: 70px; }
+.lineup-table th:nth-child(3) { width: 120px; }
+/* The table itself scrolls on narrow screens; popups are positioned above it. */
+.combo-list[popover] { position: fixed; margin: 0; right: auto; top: auto; left: auto; min-width: 0; }

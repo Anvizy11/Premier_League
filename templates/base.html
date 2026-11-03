@@ -24,7 +24,11 @@
             <nav class="flex items-center space-x-6 text-sm font-semibold uppercase tracking-wider">
                 <a href="/" class="hover:text-emerald-400 transition">Таблица</a>
                 <a href="/teams" class="hover:text-emerald-400 transition">Команды</a>
+                {% if current_user %}<span class="text-xs">{{ current_user.username }} · {{ {'team_admin':'Администратор команды','referee':'Судья','organizer':'Организатор'}[current_user.role] }}</span>
                 <a href="/admin" class="hover:text-emerald-400 transition">Панель управления</a>
+                <form action="/logout" method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button>Выйти</button></form>
+                {% else %}<a href="/login">Войти</a>{% endif %}
             </nav>
         </div>
     </header>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ player.first_name }} {{ player.last_name }} — Premier League{% endblock %}
+{% block content %}
+<a href="/teams/{{ player.team_id }}" class="text-purple-700">← {{ player.team_name }}</a>
+<div class="bg-white rounded-xl p-6 mt-4">
+<h1 class="text-3xl font-black">{{ player.first_name }} {{ player.last_name }}</h1>
+<p class="mt-3">№ {{ player.jersey_number }} · {{ player.position }} · {{ player.nationality }}</p>
+<p>Дата рождения: {{ player.birth_date or '—' }}</p>
+<p class="mt-2 {{ 'text-red-700' if player.is_suspended else 'text-emerald-700' }}">{{ 'Дисквалифицирован' if player.is_suspended else 'Допущен' }}</p>
+</div>
+<p class="text-gray-500 mt-6 mb-3">Статистика утверждённых матчей</p>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+{% for label, value in [('Матчи', stats.appearances), ('Минуты', stats.minutes), ('Голы', stats.goals), ('Жёлтые карточки', stats.yellow_cards), ('Красные карточки', stats.red_cards)] %}
+<div class="bg-white rounded-xl p-4"><div class="text-2xl font-bold">{{ value }}</div><div>{{ label }}</div></div>
+{% endfor %}
+</div>
+{% endblock %}

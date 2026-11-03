@@ -4,3 +4,7 @@ __pycache__/
 .DS_Store
 *.pyc
 .env
+
+.session_key
+*.db-wal
+*.db-shm

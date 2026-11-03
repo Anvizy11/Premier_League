@@ -21,7 +21,8 @@
 
 <!-- Переключатель вкладок -->
 <div class="border-b border-gray-200 mb-6">
-    <nav"switchTab('players')" class="border-b-2 border-purple-900 pb-3 px-1 text-sm font-bold text-purple-900 transition flex items-center space-x-2">
+    <nav class="flex gap-6">
+        <button id="btn-players" onclick="switchTab('players')" class="border-b-2 border-purple-900 pb-3 px-1 text-sm font-bold text-purple-900 transition flex items-center space-x-2">
             <span>⚽ Состав игроков</span>
             <span class="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">{{ players|length }}</span>
         </button>
@@ -150,4 +151,12 @@ function switchTab(tab) {
     }
 }
 </script>
+{% if current_user and (current_user.role == 'organizer' or (current_user.role == 'team_admin' and current_user.team_id == team.id)) %}
+<section class="bg-white rounded-xl p-5 mt-6"><h2 class="text-xl font-bold mb-3">Добавить члена штаба</h2>
+<p class="text-sm text-gray-500 mb-3">Для обязательных ролей используйте «Главный тренер» и «Врач». Остальные роли указывайте свободно.</p>
+<form method="POST" action="/teams/{{ team.id }}/staff" class="flex flex-wrap gap-3">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% for field,label in [('first_name','Имя'),('last_name','Фамилия'),('role','Роль'),('nationality','Гражданство')] %}<label>{{ label }}<input name="{{ field }}" required maxlength="100" class="block border rounded p-2"></label>{% endfor %}
+<button class="pl-purple text-white rounded px-4 py-2 self-end">Добавить</button></form></section>
+{% endif %}
 {% endblock %}
