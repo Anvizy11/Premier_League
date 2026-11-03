@@ -1,8 +1,12 @@
+"""SQLite connections and transaction boundaries."""
+
 import os
 import sqlite3
 from contextlib import contextmanager
 
-DATABASE_NAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), "premier_league.db")
+from premier_league.paths import DATABASE_PATH
+
+DATABASE_NAME = str(DATABASE_PATH)
 
 
 def get_connection():

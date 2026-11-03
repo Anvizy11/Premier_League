@@ -2,7 +2,7 @@
 {% macro token() %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endmacro %}
 {% block title %}Управление соревнованием — Premier League{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static',filename='protocol.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/protocol.css') }}">
 <h1 class="text-3xl font-black mb-6">Управление соревнованием</h1>
 {% if current_user.role == 'team_admin' %}<a class="block mb-5 text-purple-700" href="/teams/{{ current_user.team_id }}">Игроки и штаб моей команды →</a>{% endif %}
 {% if current_user.role == 'organizer' %}
@@ -29,5 +29,5 @@
 <label>Общий срок <input name="total_games" type="number" min="1" max="1000" value="{{ ban.total_games }}" required class="border rounded p-2 w-20"></label>
 <input name="explanation" placeholder="Основание решения КДК" required maxlength="2000" value="{{ ban.explanation }}" class="border rounded p-2 flex-grow"><button class="pl-purple text-white p-2 rounded">Сохранить решение КДК</button></form>{% endif %}
 </div>{% endfor %}</article>{% else %}<p class="text-gray-500">Дисциплинарных записей нет.</p>{% endfor %}</section>
-<script src="{{ url_for('static',filename='protocol.js',v='2') }}" defer></script>
+{% include 'partials/protocol_scripts.html' %}
 {% endblock %}

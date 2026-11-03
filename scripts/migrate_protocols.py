@@ -1,11 +1,13 @@
-from database import db_connection
+from premier_league.database import db_connection
+
 
 def run_migration():
     with db_connection() as conn:
         cursor = conn.cursor()
 
         # 1. Создаем таблицу составов на конкретный матч (match_lineups)
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS match_lineups (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 match_id INTEGER NOT NULL,
@@ -20,32 +22,36 @@ def run_migration():
                 FOREIGN KEY (team_id) REFERENCES teams (id),
                 UNIQUE(match_id, player_id)
             );
-        """)
+        """
+        )
 
         # 2. Добавляем необходимые поля в таблицу matches, если их еще нет
         cursor.execute("PRAGMA table_info(matches);")
         columns = [col[1] for col in cursor.fetchall()]
 
-        if 'status' not in columns:
+        if "status" not in columns:
             cursor.execute("ALTER TABLE matches ADD COLUMN status TEXT DEFAULT 'SCHEDULED';")
             print("-> Добавлена колонка: status")
 
-        if 'referee_name' not in columns:
+        if "referee_name" not in columns:
             cursor.execute("ALTER TABLE matches ADD COLUMN referee_name TEXT;")
             print("-> Добавлена колонка: referee_name")
 
-        if 'verified_by' not in columns:
+        if "verified_by" not in columns:
             cursor.execute("ALTER TABLE matches ADD COLUMN verified_by TEXT;")
             print("-> Добавлена колонка: verified_by")
 
         # Приводим уже существующие матчи к статусу VERIFIED, если они были помечены завершенными
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE matches
             SET status = 'VERIFIED'
             WHERE is_finished = 1 AND (status IS NULL OR status = 'SCHEDULED');
-        """)
+        """
+        )
 
     print("Миграция структуры под протоколы успешно завершена!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run_migration()

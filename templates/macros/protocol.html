@@ -1,0 +1,27 @@
+{% macro token() %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endmacro %}
+{% macro official(field,label,optional=false) %}
+<label class="block mb-3">{{ label }}
+{% if (is_referee or is_organizer) and editable %}
+<select data-searchable name="{{ field }}" {% if not optional %}required{% endif %} class="block border rounded p-2 w-full mt-1">
+<option value="">{{ 'Не назначен' if optional else 'Выберите судью' }}</option>
+{% for official in officials %}<option value="{{ official.name }}" {% if match[field]==official.name %}selected{% endif %}>{{ official.name }}</option>{% endfor %}
+</select>{% else %}<b class="block mt-1">{{ match[field] or 'Не назначен' }}</b>{% endif %}</label>
+{% endmacro %}
+{% macro player_row(panel,p,kind,can_edit) %}
+<tr data-player-row class="border-b align-top">
+<td class="py-2 pr-2 w-20">
+{% if can_edit %}<select data-searchable data-player-number aria-label="Игровой номер" class="border rounded p-2 w-full"><option value="">—</option>
+{% for choice in panel.players if not choice.blocked or (p and choice.id==p.id) %}<option value="{{ choice.id }}" {% if p and p.id==choice.id %}selected{% endif %}>{{ choice.jersey_number }}</option>{% endfor %}</select>
+{% else %}{{ p.jersey_number }}{% endif %}</td>
+<td class="py-2 pr-2">
+{% if can_edit %}<select data-searchable data-player-name name="{{ kind }}" aria-label="Фамилия и имя игрока" class="border rounded p-2 w-full"><option value="">Выберите игрока</option>
+{% for choice in panel.players if not choice.blocked or (p and choice.id==p.id) %}<option value="{{ choice.id }}" {% if p and p.id==choice.id %}selected{% endif %}>{{ choice.last_name }} {{ choice.first_name }}</option>{% endfor %}</select>
+{% else %}<a class="text-purple-800 font-semibold" href="/players/{{ p.id }}">{{ p.last_name }} {{ p.first_name }}</a>{% endif %}</td>
+<td class="py-2 text-xs w-36">
+{% if can_edit %}
+<label class="block mb-1"><input data-keeper type="checkbox" name="goalkeepers" value="{{ p.id if p else '' }}" {% if p and p.is_goalkeeper %}checked{% endif %} {% if not p %}disabled{% endif %}> Вратарь</label>
+<label class="block mb-1"><input data-captain type="checkbox" name="captains" value="{{ p.id if p else '' }}" {% if p and p.is_captain %}checked{% endif %} {% if not p %}disabled{% endif %}> Капитан</label>
+<span data-foreign class="text-purple-800" {% if not p or not p.is_foreign %}hidden{% endif %}>Легионер</span>
+{% else %}{% if p.is_goalkeeper %}<span class="block">Вратарь</span>{% endif %}{% if p.is_captain %}<span class="block">Капитан</span>{% endif %}{% if p.is_foreign %}<span class="block text-purple-800">Легионер</span>{% endif %}{% endif %}
+</td></tr>
+{% endmacro %}

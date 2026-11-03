@@ -1,5 +1,6 @@
 import random
-from database import db_connection
+from premier_league.database import db_connection
+
 
 def generate_gameweek_one():
     with db_connection() as conn:
@@ -31,13 +32,17 @@ def generate_gameweek_one():
             home_id = team_ids[i]
             away_id = team_ids[i + 1]
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO matches (gameweek, home_team_id, away_team_id, status, is_finished)
                 VALUES (1, ?, ?, 'SCHEDULED', 0)
-            """, (home_id, away_id))
+            """,
+                (home_id, away_id),
+            )
             fixtures_count += 1
 
         print(f"Успешно создано {fixtures_count} матчей для 1-го тура со статусом SCHEDULED!")
+
 
 if __name__ == "__main__":
     generate_gameweek_one()

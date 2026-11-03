@@ -1,4 +1,4 @@
-from database import db_connection
+from premier_league.database import db_connection
 
 TEAMS_DATA = [
     {
@@ -38,7 +38,7 @@ TEAMS_DATA = [
             ("Andre", "Harriman-Annous", 71, "FW"),
             ("Viktor", "Gyökeres", 14, "FW"),
             ("Ceadach", "O'Neill", 76, "FW"),
-        ]
+        ],
     },
     {
         "name": "Aston Villa",
@@ -76,7 +76,7 @@ TEAMS_DATA = [
             ("Ibrahim", "Mbaye", 19, "FW"),
             ("Nicolas", "Jackson", 11, "FW"),
             ("Tammy", "Abraham", 18, "FW"),
-        ]
+        ],
     },
     {
         "name": "Bournemouth",
@@ -114,7 +114,7 @@ TEAMS_DATA = [
             ("Daniel", "Jebbison", 29, "FW"),
             ("Rayan", "Rocha", 37, "FW"),
             ("Evanilson", "Lima", 9, "FW"),
-        ]
+        ],
     },
     {
         "name": "Brighton & Hove Albion",
@@ -155,7 +155,7 @@ TEAMS_DATA = [
             ("Stefanos", "Tzimas", 9, "FW"),
             ("Charalampos", "Kostoulas", 19, "FW"),
             ("Evan", "Ferguson", 28, "FW"),
-        ]
+        ],
     },
     {
         "name": "Brentford",
@@ -193,7 +193,7 @@ TEAMS_DATA = [
             ("Igor", "Thiago", 9, "FW"),
             ("Kaye", "Furo", 45, "FW"),
             ("Callum", "Wilson", 13, "FW"),
-        ]
+        ],
     },
     {
         "name": "Ipswich Town",
@@ -230,7 +230,7 @@ TEAMS_DATA = [
             ("Exequiel", "Palacios", 25, "MF"),
             ("Chuba", "Akpom", 29, "FW"),
             ("Emersonn", "Correia", 19, "FW"),
-        ]
+        ],
     },
     {
         "name": "Coventry City",
@@ -268,7 +268,7 @@ TEAMS_DATA = [
             ("Haji", "Wright", 11, "FW"),
             ("Ellis", "Simms", 9, "FW"),
             ("Ephron", "Mason-Clark", 10, "FW"),
-        ]
+        ],
     },
     {
         "name": "Crystal Palace",
@@ -310,7 +310,7 @@ TEAMS_DATA = [
             ("Jørgen Strand", "Larsen", 22, "FW"),
             ("Evann", "Guessand", 29, "FW"),
             ("Eddie", "Nketiah", 9, "FW"),
-        ]
+        ],
     },
     {
         "name": "Liverpool",
@@ -351,7 +351,7 @@ TEAMS_DATA = [
             ("Josh", "Sonni-Lambie", 70, "FW"),
             ("Lewis", "Koumas", 67, "FW"),
             ("Hugo", "Ekitiké", 11, "FW"),
-        ]
+        ],
     },
     {
         "name": "Leeds United",
@@ -388,7 +388,7 @@ TEAMS_DATA = [
             ("Dominic", "Calvert-Lewin", 9, "FW"),
             ("Jean-Mattéo", "Bahoya", 23, "FW"),
             ("Lukas", "Nmecha", 14, "FW"),
-        ]
+        ],
     },
     {
         "name": "Manchester City",
@@ -424,7 +424,7 @@ TEAMS_DATA = [
             ("Iliman", "Ndiaye", 7, "FW"),
             ("Ryan", "McAidoo", 56, "FW"),
             ("Erling", "Haaland", 9, "FW"),
-        ]
+        ],
     },
     {
         "name": "Manchester United",
@@ -466,7 +466,7 @@ TEAMS_DATA = [
             ("Matheus", "Cunha", 10, "FW"),
             ("Tynan", "Thompson", 27, "FW"),
             ("Shea", "Lacey", 31, "FW"),
-        ]
+        ],
     },
     {
         "name": "Nottingham Forest",
@@ -499,7 +499,7 @@ TEAMS_DATA = [
             ("Igor", "Jesus", 11, "FW"),
             ("Chris", "Wood", 9, "FW"),
             ("Liam", "Delap", 19, "FW"),
-        ]
+        ],
     },
     {
         "name": "Newcastle United",
@@ -539,7 +539,7 @@ TEAMS_DATA = [
             ("Michael", "Mills", 77, "FW"),
             ("Matias", "Fernandez-Pardo", 20, "FW"),
             ("William", "Osula", 10, "FW"),
-        ]
+        ],
     },
     {
         "name": "Sunderland",
@@ -581,7 +581,7 @@ TEAMS_DATA = [
             ("Timur", "Tuterov", 57, "FW"),
             ("Trey", "Samuel-Ogunsuyi", 47, "FW"),
             ("Felix", "Scott", 49, "FW"),
-        ]
+        ],
     },
     {
         "name": "Tottenham Hotspur",
@@ -620,7 +620,7 @@ TEAMS_DATA = [
             ("Mathys", "Tel", 11, "FW"),
             ("Omar", "Marmoush", 22, "FW"),
             ("Richarlison", "de Andrade", 9, "FW"),
-        ]
+        ],
     },
     {
         "name": "Fulham",
@@ -657,7 +657,7 @@ TEAMS_DATA = [
             ("Jonah", "Kusi-Asare", 27, "FW"),
             ("Macaulay", "Zepa", 35, "FW"),
             ("Rodrigo", "Muniz", 9, "FW"),
-        ]
+        ],
     },
     {
         "name": "Hull City",
@@ -700,7 +700,7 @@ TEAMS_DATA = [
             ("Mohamed-Ali", "Cho", 50, "FW"),
             ("Oliver", "McBurnie", 9, "FW"),
             ("Robinho", "Vaz", 47, "FW"),
-        ]
+        ],
     },
     {
         "name": "Chelsea",
@@ -739,7 +739,7 @@ TEAMS_DATA = [
             ("João", "Pedro", 9, "FW"),
             ("Emanuel", "Emegha", 20, "FW"),
             ("Estêvão", "Willian", 41, "FW"),
-        ]
+        ],
     },
     {
         "name": "Everton",
@@ -770,9 +770,10 @@ TEAMS_DATA = [
             ("Ainsley", "Maitland-Niles", 2, "MF"),
             ("Braiden", "Graham", 58, "FW"),
             ("Thierno", "Barry", 11, "FW"),
-        ]
-    }
+        ],
+    },
 ]
+
 
 def seed_database():
     with db_connection() as conn:
@@ -789,27 +790,39 @@ def seed_database():
         print(f"Заполнение 20 клубов и {total_players} игроков сезона 2026/2027...")
 
         for team in TEAMS_DATA:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO teams (name, short_name, city, stadium)
                 VALUES (?, ?, ?, ?)
-            """, (team["name"], team["short_name"], team["city"], team["stadium"]))
+            """,
+                (team["name"], team["short_name"], team["city"], team["stadium"]),
+            )
             team_id = cursor.lastrowid
 
             # Главный тренер (с обязательным полем nationality)
             c_fn, c_ln, c_nat = team["coach"]
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO staff (team_id, first_name, last_name, role, nationality)
                 VALUES (?, ?, ?, 'Head Coach', ?)
-            """, (team_id, c_fn, c_ln, c_nat))
+            """,
+                (team_id, c_fn, c_ln, c_nat),
+            )
 
             # Игроки полной заявки (с обязательным полем nationality)
             for fn, ln, num, pos in team["players"]:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO players (team_id, first_name, last_name, jersey_number, position, nationality, is_suspended)
                     VALUES (?, ?, ?, ?, ?, 'Unknown', 0)
-                """, (team_id, fn, ln, num, pos))
+                """,
+                    (team_id, fn, ln, num, pos),
+                )
 
-        print(f"Готово! В базе зарегистрировано {len(TEAMS_DATA)} клубов и {total_players} футболистов.")
+        print(
+            f"Готово! В базе зарегистрировано {len(TEAMS_DATA)} клубов и {total_players} футболистов."
+        )
+
 
 if __name__ == "__main__":
     seed_database()

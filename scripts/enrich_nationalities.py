@@ -1,5 +1,5 @@
 import sqlite3
-from database import db_connection
+from premier_league.database import db_connection
 
 # Карта гражданств для игроков состава
 KNOWN_NATIONALITIES = {
@@ -27,7 +27,6 @@ KNOWN_NATIONALITIES = {
     ("Christos", "Tzolis"): "Greece",
     ("Eberechi", "Eze"): "England",
     ("Viktor", "Gyökeres"): "Sweden",
-
     # Aston Villa
     ("Zion", "Suzuki"): "Japan",
     ("Marco", "Bizot"): "Netherlands",
@@ -50,7 +49,6 @@ KNOWN_NATIONALITIES = {
     ("Emiliano", "Buendía"): "Argentina",
     ("Nicolas", "Jackson"): "Senegal",
     ("Tammy", "Abraham"): "England",
-
     # Bournemouth
     ("Đorđe", "Petrović"): "Serbia",
     ("Michele", "Di Gregorio"): "Italy",
@@ -72,7 +70,6 @@ KNOWN_NATIONALITIES = {
     ("Ryan", "Christie"): "Scotland",
     ("Tyler", "Adams"): "United States",
     ("Evanilson", "Lima"): "Brazil",
-
     # Brighton
     ("Bart", "Verbruggen"): "Netherlands",
     ("Jason", "Steele"): "England",
@@ -90,7 +87,6 @@ KNOWN_NATIONALITIES = {
     ("Yasin", "Ayari"): "Sweden",
     ("Georginio", "Rutter"): "France",
     ("Evan", "Ferguson"): "Ireland",
-
     # Brentford
     ("Caoimhín", "Kelleher"): "Ireland",
     ("Aaron", "Hickey"): "Scotland",
@@ -108,7 +104,6 @@ KNOWN_NATIONALITIES = {
     ("Dango", "Ouattara"): "Burkina Faso",
     ("Igor", "Thiago"): "Brazil",
     ("Callum", "Wilson"): "England",
-
     # Liverpool
     ("Alisson", "Becker"): "Brazil",
     ("Giorgi", "Mamardashvili"): "Georgia",
@@ -129,7 +124,6 @@ KNOWN_NATIONALITIES = {
     ("Florian", "Wirtz"): "Germany",
     ("Alexander", "Isak"): "Sweden",
     ("Hugo", "Ekitiké"): "France",
-
     # Man City
     ("Gianluigi", "Donnarumma"): "Italy",
     ("Gerónimo", "Rulli"): "Argentina",
@@ -148,7 +142,6 @@ KNOWN_NATIONALITIES = {
     ("Elliot", "Anderson"): "Scotland",
     ("Enzo", "Fernández"): "Argentina",
     ("Erling", "Haaland"): "Norway",
-
     # Man United
     ("Senne", "Lammens"): "Belgium",
     ("Diogo", "Dalot"): "Portugal",
@@ -171,7 +164,6 @@ KNOWN_NATIONALITIES = {
     ("Joshua", "Zirkzee"): "Netherlands",
     ("Marcus", "Rashford"): "England",
     ("Matheus", "Cunha"): "Brazil",
-
     # Tottenham
     ("Martin", "Dúbravka"): "Slovakia",
     ("Ben", "Davies"): "Wales",
@@ -192,7 +184,6 @@ KNOWN_NATIONALITIES = {
     ("Xavi", "Simons"): "Netherlands",
     ("Dominic", "Solanke"): "England",
     ("Richarlison", "de Andrade"): "Brazil",
-
     # Chelsea
     ("Emiliano", "Martínez"): "Argentina",
     ("Valentín", "Barco"): "Argentina",
@@ -211,7 +202,6 @@ KNOWN_NATIONALITIES = {
     ("Danny", "Welbeck"): "England",
     ("João", "Pedro"): "Brazil",
     ("Estêvão", "Willian"): "Brazil",
-
     # Everton
     ("Jordan", "Pickford"): "England",
     ("Vitalii", "Mykolenko"): "Ukraine",
@@ -224,6 +214,7 @@ KNOWN_NATIONALITIES = {
     ("Kiernan", "Dewsbury-Hall"): "England",
     ("Christian", "Nørgaard"): "Denmark",
 }
+
 
 def update_nationalities():
     with db_connection() as conn:
@@ -245,10 +236,13 @@ def update_nationalities():
                 target_nat = "England"
 
             if target_nat and target_nat != current_nat:
-                cursor.execute("UPDATE players SET nationality = ? WHERE id = ?;", (target_nat, p_id))
+                cursor.execute(
+                    "UPDATE players SET nationality = ? WHERE id = ?;", (target_nat, p_id)
+                )
                 updated_count += 1
 
         print(f"Готово! Обновлено гражданств: {updated_count} из {len(players)} игроков.")
+
 
 if __name__ == "__main__":
     update_nationalities()
