@@ -1,6 +1,7 @@
 """Standings, scoring and disciplinary leaderboards from verified matches."""
 
 from premier_league.database import db_connection
+from premier_league.services.cards import get_card_statistics
 
 
 def get_standings():
@@ -25,6 +26,8 @@ def get_standings():
                 "ga": 0,
                 "gd": 0,
                 "points": 0,
+                "red_cards": 0,
+                "yellow_cards": 0,
             }
 
         # В таблицу идут ТОЛЬКО утвержденные протоколы (status = 'VERIFIED')
@@ -64,6 +67,11 @@ def get_standings():
                     table[a_id]["drawn"] += 1
                     table[a_id]["points"] += 1
 
+        cards = get_card_statistics(conn)
+        for team_id, totals in cards["team"].items():
+            if team_id in table:
+                table[team_id].update(totals)
+
         standings_list = list(table.values())
         for item in standings_list:
             item["gd"] = item["gf"] - item["ga"]
@@ -97,26 +105,53 @@ def get_top_scorers(limit=None):
         return cursor.execute(query).fetchall()
 
 
-def get_disciplinary_leaders(limit=5):
+def get_disciplinary_registry():
     from premier_league.services.discipline import disciplinary_state
 
     with db_connection() as conn:
+        cards = get_card_statistics(conn)
         state = disciplinary_state(conn)
-        players = {}
-        for row in conn.execute(
-            """SELECT p.*, t.short_name AS team_short_name, e.match_id,
-            SUM(e.event_type='YELLOW_CARD') AS yellows, SUM(e.event_type='RED_CARD') AS reds
-            FROM players p JOIN teams t ON t.id=p.team_id JOIN match_events e ON e.player_id=p.id
-            JOIN matches m ON m.id=e.match_id WHERE m.status='VERIFIED'
-            AND e.event_type IN ('YELLOW_CARD','RED_CARD') GROUP BY p.id,e.match_id"""
-        ):
-            person = players.setdefault(row["id"], dict(row, yellow_cards=0, red_cards=0))
-            person["yellow_cards"] += row["yellows"]
-            person["red_cards"] += row["reds"] + int(row["yellows"] >= 2)
-            person["is_suspended"] = state["player", row["id"]]["blocked"]
+        teams = {row["id"]: row for row in conn.execute("SELECT id,name,short_name FROM teams")}
+        registry = []
+        for (kind, subject_id), discipline in state.items():
+            totals = cards[kind].get(subject_id, {"yellow_cards": 0, "red_cards": 0})
+            if not any(totals.values()) and not discipline["blocked"] and not discipline["bans"]:
+                continue
+            person = discipline["person"]
+            team = teams[person["team_id"]]
+            registry.append(
+                dict(
+                    person,
+                    **totals,
+                    subject_type=kind,
+                    team_name=team["name"],
+                    team_short_name=team["short_name"],
+                    is_suspended=discipline["blocked"],
+                    remaining=discipline["remaining"],
+                    yellow_matches=discipline["yellow_matches"],
+                    suspension_count=len(discipline["bans"]),
+                )
+            )
         return sorted(
-            players.values(), key=lambda p: (-p["red_cards"], -p["yellow_cards"], p["last_name"])
-        )[:limit]
+            registry,
+            key=lambda p: (
+                -p["red_cards"],
+                -p["yellow_cards"],
+                p["last_name"],
+                p["first_name"],
+                p["subject_type"],
+                p["id"],
+            ),
+        )
+
+
+def get_disciplinary_leaders(limit=5):
+    players = [
+        item
+        for item in get_disciplinary_registry()
+        if item["subject_type"] == "player" and (item["yellow_cards"] or item["red_cards"])
+    ]
+    return players if limit is None else players[:limit]
 
 
 def get_teams_summary():

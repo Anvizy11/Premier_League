@@ -21,7 +21,7 @@ def disciplinary_decision():
     kind, reason = request.form.get("subject_type"), request.form.get("reason")
     explanation = request.form.get("explanation", "").strip()
     if not explanation or len(explanation) > 2000:
-        abort(400, "Укажите решение КДК (до 2000 символов)")
+        abort(400, "Укажите основание изменения срока (до 2000 символов)")
     with db_connection(write=True) as conn:
         state = disciplinary_state(conn).get((kind, subject))
         ban = (

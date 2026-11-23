@@ -186,7 +186,12 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(self.roster(2).status_code, 403)
         self.assertEqual(
             self.post(
-                "/teams/2/staff", first_name="A", last_name="B", role="Врач", nationality="RU"
+                "/teams/2/staff",
+                first_name="A",
+                last_name="B",
+                role="Врач",
+                nationality="RU",
+                birth_date="1980-01-01",
             ).status_code,
             403,
         )
@@ -195,6 +200,7 @@ class ProtocolTests(unittest.TestCase):
                 "/teams/1/staff",
                 first_name="A",
                 last_name="B",
+                birth_date="1980-01-01",
                 role="Тренер вратарей",
                 nationality="RU",
             ).status_code,
@@ -621,7 +627,12 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(len(self.query("SELECT * FROM match_lineups WHERE player_id=102")), 1)
         self.assertEqual(
             self.post(
-                "/teams/2/staff", first_name="A", last_name="B", role="Врач", nationality="RU"
+                "/teams/2/staff",
+                first_name="A",
+                last_name="B",
+                role="Врач",
+                nationality="RU",
+                birth_date="1980-01-01",
             ).status_code,
             302,
         )
@@ -784,6 +795,275 @@ class ProtocolTests(unittest.TestCase):
                 400,
             )
         self.assertEqual(len(self.query("SELECT * FROM staff_events")), 0)
+
+    def protocol_timeline(self):
+        with patch("premier_league.routes.matches.render_template", return_value="ok") as render:
+            self.assertEqual(self.client.get("/matches/1/protocol").status_code, 200)
+            return render.call_args.kwargs["timeline"]
+
+    def test_timeline_merges_all_sources_by_minute(self):
+        self.prepare()
+        self.assertEqual(
+            self.post(
+                "/matches/1/staff-event", staff_id=101, event_type="YELLOW_CARD", minute=87
+            ).status_code,
+            302,
+        )
+        self.assertEqual(self.event(102, "GOAL", 14).status_code, 302)
+        self.assertEqual(
+            self.post(
+                "/matches/1/make-substitution", player_out_id=102, player_in_id=112, minute=60
+            ).status_code,
+            302,
+        )
+        timeline = self.protocol_timeline()
+        self.assertEqual(
+            [(item["minute"], item["kind"]) for item in timeline],
+            [(14, "player"), (60, "substitution"), (87, "staff")],
+        )
+        html = self.client.get("/matches/1/protocol").text
+        self.assertLess(
+            html.index('data-timeline-kind="player"'),
+            html.index('data-timeline-kind="substitution"'),
+        )
+        self.assertLess(
+            html.index('data-timeline-kind="substitution"'),
+            html.index('data-timeline-kind="staff"'),
+        )
+        self.assertIn("/delete-staff-event/1", html)
+        self.assertIn("/delete-substitution/1", html)
+
+    def test_same_minute_uses_insertion_order_for_display_and_field_presence(self):
+        self.prepare()
+        self.post("/matches/1/staff-event", staff_id=101, event_type="YELLOW_CARD", minute=60)
+        self.assertEqual(self.event(102, "YELLOW_CARD", 60).status_code, 302)
+        self.assertEqual(self.event(102, "GOAL", 60).status_code, 302)
+        self.assertEqual(
+            self.post(
+                "/matches/1/make-substitution", player_out_id=102, player_in_id=112, minute=60
+            ).status_code,
+            302,
+        )
+        self.assertEqual(self.event(112, "GOAL", 60).status_code, 302)
+        timeline = self.protocol_timeline()
+        self.assertEqual(
+            [item["kind"] for item in timeline],
+            ["staff", "player", "player", "substitution", "player"],
+        )
+        self.assertFalse(timeline[1]["off_field"])
+        self.assertEqual(
+            self.query("SELECT minutes_played FROM match_lineups WHERE player_id=102")[0][0], 60
+        )
+        self.assertEqual(
+            self.query("SELECT minutes_played FROM match_lineups WHERE player_id=112")[0][0], 30
+        )
+        self.finish()
+        self.assertEqual(self.query("SELECT home_score FROM matches WHERE id=1")[0][0], 2)
+        self.assertEqual(
+            [item["kind"] for item in self.protocol_timeline()],
+            ["staff", "player", "player", "substitution", "player"],
+        )
+
+    def test_deleted_recreated_event_receives_new_position(self):
+        self.prepare()
+        self.event(102, "GOAL", 60)
+        self.post("/matches/1/staff-event", staff_id=101, event_type="YELLOW_CARD", minute=60)
+        original_hash = self.digest()
+        self.assertEqual(self.post("/matches/1/delete-event/1").status_code, 302)
+        self.assertEqual(self.event(102, "GOAL", 60).status_code, 302)
+        self.assertEqual([item["kind"] for item in self.protocol_timeline()], ["staff", "player"])
+        self.assertNotEqual(original_hash, self.digest())
+        self.assertEqual(len(self.query("SELECT * FROM match_timeline_order")), 2)
+
+    def test_invalid_event_rolls_back_order_and_match_removal_cleans_order(self):
+        self.prepare()
+        self.event(102, "GOAL", 10)
+        before = [tuple(row) for row in self.query("SELECT * FROM match_timeline_order")]
+        self.assertEqual(
+            self.post(
+                "/matches/1/make-substitution", player_out_id=102, player_in_id=212, minute=60
+            ).status_code,
+            400,
+        )
+        self.assertEqual(
+            before, [tuple(row) for row in self.query("SELECT * FROM match_timeline_order")]
+        )
+        with db_connection(write=True) as conn:
+            conn.execute("DELETE FROM matches WHERE id=1")
+            self.assertEqual(
+                conn.execute("SELECT COUNT(*) FROM match_timeline_order").fetchone()[0], 0
+            )
+
+    def test_legacy_event_order_backfill_is_repeatable(self):
+        self.prepare()
+        self.event(102, "GOAL", 14)
+        self.post("/matches/1/staff-event", staff_id=101, event_type="YELLOW_CARD", minute=87)
+        from premier_league.migrations import initialize_database
+
+        with db_connection(write=True) as conn:
+            original = [tuple(row) for row in conn.execute("SELECT * FROM match_events")]
+            for table in ("match_events", "staff_events", "match_substitutions"):
+                conn.execute(f"DROP TRIGGER {table}_timeline_insert")
+                conn.execute(f"DROP TRIGGER {table}_timeline_delete")
+            conn.execute("DROP TABLE match_timeline_order")
+            initialize_database(conn)
+            backfilled = [tuple(row) for row in conn.execute("SELECT * FROM match_timeline_order")]
+            initialize_database(conn)
+            self.assertEqual(
+                backfilled,
+                [tuple(row) for row in conn.execute("SELECT * FROM match_timeline_order")],
+            )
+            self.assertEqual(
+                original, [tuple(row) for row in conn.execute("SELECT * FROM match_events")]
+            )
+        self.assertEqual([item["minute"] for item in self.protocol_timeline()], [14, 87])
+
+    def test_timeline_empty_state(self):
+        self.login("org")
+        self.assertEqual(self.protocol_timeline(), [])
+        self.assertIn("События пока не добавлены.", self.client.get("/matches/1/protocol").text)
+
+    def test_team_card_totals_include_staff_and_only_verified_matches(self):
+        from premier_league.services.cards import get_card_statistics
+        from premier_league.services.standings import get_standings
+
+        self.historical(2, yellows=2)
+        self.historical(3, yellows=1, red=True)
+        self.historical(4, red=True, kind="staff")
+        self.historical(5, yellows=1, red=True, status="PENDING_REVIEW")
+        with db_connection() as conn:
+            cards = get_card_statistics(conn)
+        self.assertEqual(cards["player"][102], {"yellow_cards": 1, "red_cards": 2})
+        self.assertEqual(cards["staff"][102], {"yellow_cards": 0, "red_cards": 1})
+        self.assertEqual(cards["team"][1], {"yellow_cards": 1, "red_cards": 3})
+        standings = {team["id"]: team for team in get_standings()}
+        self.assertEqual((standings[1]["yellow_cards"], standings[1]["red_cards"]), (1, 3))
+        self.assertEqual((standings[3]["yellow_cards"], standings[3]["red_cards"]), (0, 0))
+
+    def test_two_yellows_count_only_as_red_for_players_staff_and_player_profile(self):
+        from premier_league.services.cards import get_card_statistics
+
+        self.historical(2, yellows=2)
+        self.historical(3, yellows=2, kind="staff")
+        with db_connection() as conn:
+            cards = get_card_statistics(conn)
+            self.assertEqual(
+                conn.execute(
+                    "SELECT COUNT(*) FROM match_events WHERE event_type='YELLOW_CARD'"
+                ).fetchone()[0],
+                2,
+            )
+            self.assertEqual(
+                conn.execute(
+                    "SELECT COUNT(*) FROM staff_events WHERE event_type='YELLOW_CARD'"
+                ).fetchone()[0],
+                2,
+            )
+        self.assertEqual(cards["player"][102], {"yellow_cards": 0, "red_cards": 1})
+        self.assertEqual(cards["staff"][102], {"yellow_cards": 0, "red_cards": 1})
+        self.assertEqual(cards["team"][1], {"yellow_cards": 0, "red_cards": 2})
+        with patch("premier_league.routes.public.render_template", return_value="ok") as render:
+            self.client.get("/players/102")
+            stats = render.call_args.kwargs["stats"]
+        self.assertEqual((stats["yellow_cards"], stats["red_cards"]), (0, 1))
+
+    def test_registry_preserves_cards_after_suspension_is_served(self):
+        from premier_league.services.standings import get_disciplinary_registry
+
+        self.historical(2, yellows=1, red=True)
+        before = next(
+            p
+            for p in get_disciplinary_registry()
+            if p["subject_type"] == "player" and p["id"] == 102
+        )
+        self.assertTrue(before["is_suspended"])
+        self.historical(3)
+        after = next(
+            p
+            for p in get_disciplinary_registry()
+            if p["subject_type"] == "player" and p["id"] == 102
+        )
+        self.assertFalse(after["is_suspended"])
+        self.assertEqual(
+            (after["yellow_cards"], after["red_cards"], after["suspension_count"]), (1, 1, 1)
+        )
+        with patch("premier_league.routes.public.render_template", return_value="ok") as render:
+            self.client.get("/players/102")
+            stats = render.call_args.kwargs["stats"]
+        self.assertEqual(
+            (stats["yellow_cards"], stats["red_cards"], stats["suspensions"]), (1, 1, 1)
+        )
+
+    def test_registry_double_yellow_stats_are_separate_from_accumulation(self):
+        from premier_league.services.standings import get_disciplinary_registry
+
+        self.historical(2, yellows=1)
+        self.historical(3, yellows=2)
+        record = next(
+            p
+            for p in get_disciplinary_registry()
+            if p["subject_type"] == "player" and p["id"] == 102
+        )
+        self.assertEqual(
+            (record["yellow_cards"], record["red_cards"], record["yellow_matches"]), (1, 1, 1)
+        )
+        self.assertEqual(record["suspension_count"], 1)
+
+    def test_public_registry_has_all_participants_and_retains_bottom_preview(self):
+        from premier_league.services.standings import (
+            get_disciplinary_registry,
+            get_disciplinary_leaders,
+        )
+
+        self.historical(2, yellows=1)
+        with db_connection(write=True) as conn:
+            for player in range(103, 110):
+                conn.execute(
+                    "INSERT INTO match_events (match_id,team_id,player_id,event_type,minute) VALUES (2,1,?,'YELLOW_CARD',20)",
+                    (player,),
+                )
+            conn.execute(
+                "INSERT INTO staff_events (match_id,team_id,staff_id,event_type,minute) VALUES (2,1,101,'YELLOW_CARD',30)"
+            )
+        self.assertEqual(len(get_disciplinary_registry()), 9)
+        self.assertEqual(len(get_disciplinary_leaders()), 5)
+        self.assertEqual(len(get_disciplinary_leaders(limit=None)), 8)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        for marker in (
+            "tab-btn-table",
+            "tab-btn-scorers",
+            "tab-btn-discipline",
+            "tab-content-discipline",
+            "Краткий дисциплинарный реестр",
+            'data-discipline-subject="staff-101"',
+            'data-discipline-subject="player-109"',
+        ):
+            self.assertIn(marker, html)
+        self.assertIn("/static/js/standings.js", html)
+        self.assertLess(html.index(">РМ</th>"), html.index(">КК</th>"))
+        self.assertLess(html.index(">КК</th>"), html.index(">ЖК</th>"))
+
+    def test_organizer_edits_suspension_without_commission_workflow(self):
+        self.historical(2, red=True)
+        self.login("org")
+        html = self.client.get("/admin").text
+        self.assertIn("Сохранить срок отстранения", html)
+        self.assertNotIn("Сохранить решение КДК", html)
+        self.assertEqual(
+            self.post(
+                "/discipline/decision",
+                match_id=2,
+                subject_type="player",
+                subject_id=102,
+                reason="RED_CARD",
+                total_games=2,
+                explanation="Внешнее решение комиссии",
+            ).status_code,
+            302,
+        )
+        self.assertEqual(self.state()["player", 102]["remaining"], 2)
 
     def test_idempotent_migration_and_legacy_accounts(self):
         from premier_league.migrations import initialize_database

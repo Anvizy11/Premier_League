@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS staff (
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         role TEXT NOT NULL,
+        birth_date TEXT,
         nationality TEXT NOT NULL, is_suspended BOOLEAN DEFAULT 0,
         FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
     );
@@ -122,3 +123,19 @@ CREATE TABLE IF NOT EXISTS protocol_confirmations (
 CREATE TABLE IF NOT EXISTS officials (
  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, source_url TEXT
 );
+
+CREATE TABLE IF NOT EXISTS match_timeline_order (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+ event_kind TEXT NOT NULL CHECK(event_kind IN ('player','staff','substitution')),
+ event_id INTEGER NOT NULL,
+ UNIQUE(event_kind,event_id)
+);
+CREATE INDEX IF NOT EXISTS match_timeline_order_match ON match_timeline_order(match_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS players_birth_identity
+ON players(first_name COLLATE NOCASE,last_name COLLATE NOCASE,birth_date)
+WHERE birth_date IS NOT NULL AND birth_date<>'';
+CREATE UNIQUE INDEX IF NOT EXISTS staff_birth_identity
+ON staff(first_name COLLATE NOCASE,last_name COLLATE NOCASE,birth_date)
+WHERE birth_date IS NOT NULL AND birth_date<>'';

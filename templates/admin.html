@@ -27,7 +27,7 @@
 {% if current_user.role=='organizer' %}<form method="POST" action="/discipline/decision" class="flex flex-wrap gap-2 mt-2">{{ token() }}
 <input type="hidden" name="match_id" value="{{ ban.match_id }}"><input type="hidden" name="subject_type" value="{{ key[0] }}"><input type="hidden" name="subject_id" value="{{ key[1] }}"><input type="hidden" name="reason" value="{{ ban.reason }}">
 <label>Общий срок <input name="total_games" type="number" min="1" max="1000" value="{{ ban.total_games }}" required class="border rounded p-2 w-20"></label>
-<input name="explanation" placeholder="Основание решения КДК" required maxlength="2000" value="{{ ban.explanation }}" class="border rounded p-2 flex-grow"><button class="pl-purple text-white p-2 rounded">Сохранить решение КДК</button></form>{% endif %}
+<input name="explanation" placeholder="Основание изменения срока" required maxlength="2000" value="{{ ban.explanation }}" class="border rounded p-2 flex-grow"><button class="pl-purple text-white p-2 rounded">Сохранить срок отстранения</button></form>{% endif %}
 </div>{% endfor %}</article>{% else %}<p class="text-gray-500">Дисциплинарных записей нет.</p>{% endfor %}</section>
 {% include 'partials/protocol_scripts.html' %}
 {% endblock %}

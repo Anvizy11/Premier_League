@@ -3,6 +3,7 @@
 from flask import Blueprint, render_template, abort, request, redirect, url_for, g
 from premier_league.database import db_connection
 from premier_league.auth import roles_required
+from premier_league.services.timeline import build_match_timeline, get_recorded_order
 from premier_league.services.protocol import (
     match_row,
     validate_lineups,
@@ -110,9 +111,15 @@ def match_protocol(match_id):
             JOIN players po ON po.id=ms.player_out_id JOIN players pi ON pi.id=ms.player_in_id WHERE match_id=? ORDER BY minute,ms.id""",
             (match_id,),
         ).fetchall()
+        recorded_order = get_recorded_order(conn, match_id)
+        events = [dict(e, recorded_order=recorded_order["player", e["id"]]) for e in events]
+        substitutions = [
+            dict(s, recorded_order=recorded_order["substitution", s["id"]]) for s in substitutions
+        ]
         starters = [p["id"] for panel in panels for p in panel["starters"]]
         field_positions = event_field_positions(starters, substitutions, events)
         events = [dict(e, off_field=not field_positions[e["id"]]) for e in events]
+        timeline = build_match_timeline(conn, match_id, events, staff_events, substitutions)
         event_context = dict(
             starters=starters, substitutions=[dict(s) for s in substitutions], events=events
         )
@@ -144,6 +151,7 @@ def match_protocol(match_id):
             events=events,
             staff_events=staff_events,
             substitutions=substitutions,
+            timeline=timeline,
             referees=referees,
             is_referee=is_referee,
             is_organizer=is_organizer,

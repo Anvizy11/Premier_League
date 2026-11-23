@@ -1,0 +1,45 @@
+{% macro person_form(team_id, kind, today) %}
+{% set prefix = kind ~ '-' ~ team_id %}
+<section class="bg-white rounded-xl p-5 mt-6">
+    <h2 class="text-xl font-bold mb-3">{{ 'Добавить игрока' if kind == 'player' else 'Добавить члена штаба' }}</h2>
+    <p class="text-sm text-gray-500 mb-4">Возраст рассчитывается по дате рождения. Имя, фамилия и дата рождения проверяются на совпадение с существующими {{ 'игроками' if kind == 'player' else 'сотрудниками штаба' }} во всех клубах.</p>
+    {% if kind == 'staff' %}<p class="text-sm text-gray-500 mb-4">Для обязательных ролей используйте «Главный тренер» и «Врач». Остальные роли можно указать свободно.</p>{% endif %}
+    <form method="POST" action="{{ url_for('people.add_player' if kind == 'player' else 'people.add_staff', team_id=team_id) }}" data-person-form data-today="{{ today }}" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="{{ prefix }}-first-name">Имя
+            <input id="{{ prefix }}-first-name" name="first_name" required maxlength="100" class="block border rounded p-2 w-full">
+        </label>
+        <label for="{{ prefix }}-last-name">Фамилия
+            <input id="{{ prefix }}-last-name" name="last_name" required maxlength="100" class="block border rounded p-2 w-full">
+        </label>
+        <label for="{{ prefix }}-age">Возраст
+            <input id="{{ prefix }}-age" data-age-display readonly placeholder="—" class="block border rounded p-2 w-full bg-gray-50" aria-live="polite">
+        </label>
+        <label for="{{ prefix }}-birth-date">Дата рождения
+            <input id="{{ prefix }}-birth-date" name="birth_date" data-birth-date type="date" max="{{ today }}" required class="block border rounded p-2 w-full">
+        </label>
+        {% if kind == 'player' %}
+        <label for="{{ prefix }}-number">Игровой номер
+            <input id="{{ prefix }}-number" name="jersey_number" type="number" min="1" step="1" required class="block border rounded p-2 w-full">
+        </label>
+        <label for="{{ prefix }}-position">Позиция
+            <select id="{{ prefix }}-position" name="position" required class="block border rounded p-2 w-full">
+                <option value="">Выберите позицию</option>
+                <option value="GK">Вратарь</option>
+                <option value="DF">Защитник</option>
+                <option value="MF">Полузащитник</option>
+                <option value="FW">Нападающий</option>
+            </select>
+        </label>
+        {% else %}
+        <label for="{{ prefix }}-role">Роль
+            <input id="{{ prefix }}-role" name="role" required maxlength="100" class="block border rounded p-2 w-full">
+        </label>
+        {% endif %}
+        <label for="{{ prefix }}-nationality">Гражданство
+            <input id="{{ prefix }}-nationality" name="nationality" required maxlength="100" class="block border rounded p-2 w-full">
+        </label>
+        <div class="self-end"><button class="pl-purple text-white rounded px-4 py-2">{{ 'Добавить игрока' if kind == 'player' else 'Добавить члена штаба' }}</button></div>
+    </form>
+</section>
+{% endmacro %}

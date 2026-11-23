@@ -1,6 +1,7 @@
 """Validation and deterministic calculation for a 90-minute match."""
 
 from flask import abort, request
+from premier_league.services.timeline import get_recorded_order
 
 
 def form_int(name, minimum=1, maximum=None):
@@ -97,14 +98,29 @@ def calculate_minutes(conn, match_id):
     yellow_counts = {}
     dismissed = set()
     roster_ids = set(intervals)
+    recorded_order = get_recorded_order(conn, match_id)
     timeline = []
     for sub in conn.execute("SELECT * FROM match_substitutions WHERE match_id=?", (match_id,)):
         timeline.append(
-            (sub["minute"], 0, sub["id"], "sub", sub["player_out_id"], sub["player_in_id"])
+            (
+                sub["minute"],
+                recorded_order["substitution", sub["id"]],
+                sub["id"],
+                "sub",
+                sub["player_out_id"],
+                sub["player_in_id"],
+            )
         )
     for event in conn.execute("SELECT * FROM match_events WHERE match_id=?", (match_id,)):
         timeline.append(
-            (event["minute"], 1, event["id"], event["event_type"], event["player_id"], None)
+            (
+                event["minute"],
+                recorded_order["player", event["id"]],
+                event["id"],
+                event["event_type"],
+                event["player_id"],
+                None,
+            )
         )
     for minute, _, _, kind, player, incoming in sorted(timeline):
         interval = intervals.get(player)
@@ -185,8 +201,8 @@ def event_field_positions(starters, substitutions, events):
     active = set(starters)
     yellows = {}
     positions = {}
-    timeline = [(s["minute"], 0, s["id"], "sub", s) for s in substitutions]
-    timeline += [(e["minute"], 1, e["id"], "event", e) for e in events]
+    timeline = [(s["minute"], s["recorded_order"], s["id"], "sub", s) for s in substitutions]
+    timeline += [(e["minute"], e["recorded_order"], e["id"], "event", e) for e in events]
     for _, _, _, kind, item in sorted(timeline, key=lambda entry: entry[:3]):
         if kind == "sub":
             active.discard(item["player_out_id"])

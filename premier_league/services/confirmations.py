@@ -12,6 +12,13 @@ def protocol_hash(conn, match_id):
         (match_id,),
     ).fetchone()
     content = {"match": dict(match)}
+    content["event_order"] = [
+        tuple(row)
+        for row in conn.execute(
+            "SELECT event_kind,event_id FROM match_timeline_order WHERE match_id=? ORDER BY id",
+            (match_id,),
+        )
+    ]
     for table, fields, order in [
         ("match_lineups", "player_id,team_id,is_starter,is_captain,is_goalkeeper", "player_id"),
         ("match_staff", "staff_id,team_id,role", "staff_id"),

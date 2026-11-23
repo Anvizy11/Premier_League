@@ -19,8 +19,17 @@ def create_app(config=None):
     register_cli(app)
     register_errors(app)
 
-    from premier_league.routes import admin, auth, discipline, events, lineups, matches, public
+    from premier_league.routes import (
+        admin,
+        auth,
+        discipline,
+        events,
+        lineups,
+        matches,
+        people,
+        public,
+    )
 
-    for module in (auth, public, admin, matches, lineups, events, discipline):
+    for module in (auth, public, admin, matches, lineups, events, discipline, people):
         app.register_blueprint(module.bp)
     return app

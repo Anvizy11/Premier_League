@@ -44,3 +44,28 @@ def register_cli(app):
         except sqlite3.IntegrityError:
             raise click.ClickException("Такое имя уже существует")
         click.echo(f"Создан пользователь {username}, роль: {role}")
+
+    @app.cli.command("reset-password")
+    @click.argument("username")
+    def reset_password(username):
+        """Set an existing account's password using hidden terminal input."""
+        with db_connection() as conn:
+            user = conn.execute("SELECT id FROM users WHERE username=?", (username,)).fetchone()
+        if user is None:
+            raise click.ClickException("Пользователь не найден")
+
+        password = click.prompt(
+            "Новый пароль", hide_input=True, confirmation_prompt="Повторите пароль"
+        )
+        if len(password) < 10:
+            raise click.ClickException("Пароль должен содержать минимум 10 символов")
+
+        password_hash = generate_password_hash(password)
+        with db_connection(write=True) as conn:
+            result = conn.execute(
+                "UPDATE users SET password_hash=? WHERE id=? AND username=?",
+                (password_hash, user["id"], username),
+            )
+            if result.rowcount != 1:
+                raise click.ClickException("Пользователь не найден")
+        click.echo(f"Пароль пользователя {username} обновлён.")

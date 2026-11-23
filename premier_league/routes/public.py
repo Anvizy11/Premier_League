@@ -1,11 +1,13 @@
 """Public routes."""
 
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from premier_league.database import db_connection
+from premier_league.services.cards import get_card_statistics
+from premier_league.services.people import calculate_age, competition_today
 from premier_league.services.standings import (
     get_standings,
     get_top_scorers,
-    get_disciplinary_leaders,
+    get_disciplinary_registry,
 )
 
 bp = Blueprint("public", __name__)
@@ -13,11 +15,18 @@ bp = Blueprint("public", __name__)
 
 @bp.route("/")
 def index():
+    registry = get_disciplinary_registry()
+    leaders = [
+        item
+        for item in registry
+        if item["subject_type"] == "player" and (item["yellow_cards"] or item["red_cards"])
+    ][:5]
     return render_template(
         "standings.html",
         standings=get_standings(),
         top_scorers=get_top_scorers(limit=None),
-        disciplinary_leaders=get_disciplinary_leaders(),
+        disciplinary_leaders=leaders,
+        disciplinary_registry=registry,
     )
 
 
@@ -78,9 +87,31 @@ def team_detail(team_id):
         from premier_league.services.discipline import disciplinary_state
 
         state = disciplinary_state(conn)
-        players = [dict(p, is_suspended=state["player", p["id"]]["blocked"]) for p in players]
-        staff = [dict(p, is_suspended=state["staff", p["id"]]["blocked"]) for p in staff]
-        return render_template("team_detail.html", team=team, players=players, staff=staff)
+        today = competition_today()
+        players = [
+            dict(
+                p,
+                age=calculate_age(p["birth_date"], today),
+                is_suspended=state["player", p["id"]]["blocked"],
+            )
+            for p in players
+        ]
+        staff = [
+            dict(
+                p,
+                age=calculate_age(p["birth_date"], today),
+                is_suspended=state["staff", p["id"]]["blocked"],
+            )
+            for p in staff
+        ]
+        return render_template(
+            "team_detail.html",
+            team=team,
+            players=players,
+            staff=staff,
+            today=today.isoformat(),
+            active_tab="staff" if request.args.get("tab") == "staff" else "players",
+        )
 
 
 @bp.route("/players/<int:player_id>")
@@ -134,14 +165,12 @@ def player_detail(player_id):
             stats["minutes"] = minutes_row["total_min"] or 0
             stats["appearances"] = minutes_row["apps"] or 0
 
-        stats["red_cards"] += conn.execute(
-            """SELECT COUNT(*) FROM (
-            SELECT e.match_id FROM match_events e JOIN matches m ON m.id=e.match_id
-            WHERE m.status='VERIFIED' AND e.player_id=? AND e.event_type='YELLOW_CARD'
-            GROUP BY e.match_id HAVING COUNT(*)>=2)""",
-            (player_id,),
-        ).fetchone()[0]
         from premier_league.services.discipline import disciplinary_state
 
-        player = dict(player, is_suspended=disciplinary_state(conn)["player", player_id]["blocked"])
+        discipline = disciplinary_state(conn)["player", player_id]
+        stats.update(
+            get_card_statistics(conn)["player"].get(player_id, {"yellow_cards": 0, "red_cards": 0})
+        )
+        stats["suspensions"] = len(discipline["bans"])
+        player = dict(player, is_suspended=discipline["blocked"])
         return render_template("player_detail.html", player=player, stats=stats)

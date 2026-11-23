@@ -9,9 +9,9 @@
       const minute = Number(minuteInput.value);
       const active = new Set(context.starters), dismissed = new Set(), yellows = new Map();
       const timeline = [
-        ...context.substitutions.map(sub => ({ minute: sub.minute, priority: 0, id: sub.id, sub })),
-        ...context.events.map(event => ({ minute: event.minute, priority: 1, id: event.id, event })),
-      ].filter(item => item.minute <= minute).sort((a, b) => a.minute - b.minute || a.priority - b.priority || a.id - b.id);
+        ...context.substitutions.map(sub => ({ minute: sub.minute, order: sub.recorded_order, sub })),
+        ...context.events.map(event => ({ minute: event.minute, order: event.recorded_order, event })),
+      ].filter(item => item.minute <= minute).sort((a, b) => a.minute - b.minute || a.order - b.order);
       timeline.forEach(item => {
         if (item.sub) { active.delete(item.sub.player_out_id); active.add(item.sub.player_in_id); }
         else {

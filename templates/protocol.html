@@ -82,11 +82,23 @@
 </div>{% endif %}
 <section class="bg-white rounded-xl p-5 mt-6"><h2 class="text-xl font-bold mb-3">События матча</h2>
 {% set names = {'GOAL':'Гол','PENALTY':'Пенальти','OWN_GOAL':'Автогол','YELLOW_CARD':'ЖК','RED_CARD':'Прямая КК'} %}
-{% for list,staff_card in [(events,false),(staff_events,true)] %}
-{% for e in list %}<div class="flex flex-wrap gap-3 py-2 border-b">{{ e.minute }}′ {{ names[e.event_type] }} · {{ e.first_name }} {{ e.last_name }}{% if staff_card %} (штаб, не на поле){% elif e.off_field and e.event_type in ('YELLOW_CARD','RED_CARD') %} <span class="text-amber-800">(не на поле)</span>{% endif %}
-{% if event_editable %}<form method="POST" action="/matches/{{ match.id }}/{{ 'delete-staff-event' if staff_card else 'delete-event' }}/{{ e.id }}">{{ token() }}<button class="text-red-700">Удалить</button></form>{% endif %}</div>{% endfor %}{% endfor %}
-{% for sub in substitutions %}<div class="flex gap-3 py-2 border-b">{{ sub.minute }}′ Замена: {{ sub.out_name }} → {{ sub.in_name }}
-{% if event_editable %}<form method="POST" action="/matches/{{ match.id }}/delete-substitution/{{ sub.id }}">{{ token() }}<button class="text-red-700">Отменить</button></form>{% endif %}</div>{% endfor %}
+{% for item in timeline %}
+<div class="flex flex-wrap gap-3 py-2 border-b" data-timeline-kind="{{ item.kind }}" data-timeline-id="{{ item.id }}">
+    {% if item.kind == 'substitution' %}
+        <span>{{ item.minute }}′ Замена: {{ item.out_name }} → {{ item.in_name }}</span>
+    {% else %}
+        <span>{{ item.minute }}′ {{ names[item.event_type] }} · {{ item.first_name }} {{ item.last_name }}{% if item.kind == 'staff' %} (штаб, не на поле){% elif item.off_field and item.event_type in ('YELLOW_CARD','RED_CARD') %} <span class="text-amber-800">(не на поле)</span>{% endif %}</span>
+    {% endif %}
+    {% if event_editable %}
+    <form method="POST" action="/matches/{{ match.id }}/{{ item.delete_action }}/{{ item.id }}">
+        {{ token() }}
+        <button class="text-red-700">{{ 'Отменить' if item.kind == 'substitution' else 'Удалить' }}</button>
+    </form>
+    {% endif %}
+</div>
+{% else %}
+<p class="text-sm text-gray-500">События пока не добавлены.</p>
+{% endfor %}
 </section>
 <div class="mt-6 flex flex-wrap gap-4">
 {% if event_editable %}<form method="POST" action="/matches/{{ match.id }}/submit-for-review">{{ token() }}<button class="bg-blue-700 text-white rounded px-4 py-2">Передать итоговый протокол организатору</button></form>{% endif %}

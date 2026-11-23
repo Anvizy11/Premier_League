@@ -1,6 +1,6 @@
 """Lineups routes."""
 
-from flask import Blueprint, abort, request, redirect, url_for, g
+from flask import Blueprint, abort, redirect, url_for, g
 from premier_league.database import db_connection
 from premier_league.auth import roles_required
 from premier_league.services.protocol import (
@@ -113,28 +113,3 @@ def return_lineup(match_id, team_id):
             (match_id, team_id),
         )
     return redirect(url_for("matches.match_protocol", match_id=match_id))
-
-
-@bp.post("/teams/<int:team_id>/staff")
-@roles_required("team_admin", "organizer")
-def add_staff(team_id):
-    if g.user["role"] != "organizer" and team_id != g.user["team_id"]:
-        abort(403)
-    fields = {
-        name: request.form.get(name, "").strip()
-        for name in ("first_name", "last_name", "role", "nationality")
-    }
-    if any(not value or len(value) > 100 for value in fields.values()):
-        abort(400, "Заполните имя, фамилию, роль и гражданство (до 100 символов)")
-    with db_connection(write=True) as conn:
-        conn.execute(
-            "INSERT INTO staff (team_id,first_name,last_name,role,nationality) VALUES (?,?,?,?,?)",
-            (
-                team_id,
-                fields["first_name"],
-                fields["last_name"],
-                fields["role"],
-                fields["nationality"],
-            ),
-        )
-    return redirect(url_for("public.team_detail", team_id=team_id))
